@@ -1,0 +1,111 @@
+FolderGen
+' This VBA code automates the process of creating folders, downloading PDF files from URLs, 
+' converting PDF files to Word documents and text files. The code reads URLs and folder names from 
+' an Excel worksheet and saves the files in a parent folder with subfolders for each unique folder 
+' name. This code is excellent for data collection purposes for machine learning tasks.
+' If your're a developer, manipulating this information is easy. If you're a
+' novice, chances are you aren't reading this, but if you are, just modify the
+' information within the rows themselves and keep a mental note of what the data
+' represents.
+
+' Atlas Unified
+
+Private Sub CommandButton1_Click()
+    Dim FileSystem As Object
+    Dim folderPath As String
+    Dim ParentFolderPath As String
+    Dim ws As Worksheet
+    Dim i As Long
+    Dim URL As String
+    Dim FolderName As String
+    Dim xmlhttp As Object
+    Dim folder As Object
+    Dim WordApp As Object
+    Dim PDFDoc As Object
+    Dim BatchSize As Integer
+    Dim UserResponse As Integer
+    Dim startTime As Double
+    Dim elapsedTime As String
+    Dim startRow As Long
+    Dim endRow As Long
+
+    
+    startRow = 8
+    endRow = 20
+    
+    Application.StatusBar = "Processing..."
+    
+    Set FileSystem = CreateObject("Scripting.FileSystemObject")
+    ParentFolderPath = "C:\Excel-Function"
+
+    If Not FileSystem.FolderExists(ParentFolderPath) Then
+        FileSystem.CreateFolder ParentFolderPath
+    End If
+
+    Set ws = ThisWorkbook.Worksheets("FolderGen")
+    
+    startTime = Timer
+    
+    ' Initialize Word application
+    Set WordApp = CreateObject("Word.Application")
+    WordApp.Visible = False
+
+    For i = startRow To endRow
+        FolderName = ws.Cells(i, 10).Value
+
+        If Not FileSystem.FolderExists(ParentFolderPath & "\" & FolderName) Then
+            FileSystem.CreateFolder ParentFolderPath & "\" & FolderName
+        End If
+
+        URL = ws.Cells(i, 7).Value
+
+        If URL <> "" Then
+            folderPath = ParentFolderPath & "\" & FolderName
+            Filename = folderPath & "\" & "PDF_" & i & ".pdf"
+
+            ' Skip file if it already exists
+            If FileSystem.FileExists(Filename) Then
+                GoTo SkipFile
+            End If
+
+            Set xmlhttp = CreateObject("MSXML2.XMLHTTP")
+            xmlhttp.Open "GET", URL, False
+            xmlhttp.send
+
+            If xmlhttp.Status = 200 Then
+                Set oStream = CreateObject("ADODB.Stream")
+                oStream.Open
+                oStream.Type = 1
+                oStream.Write xmlhttp.responseBody
+                oStream.SaveToFile Filename, 2
+                oStream.Close
+
+                elapsedTime = Format((Timer - startTime) / 86400, "hh:mm:ss")
+        
+                Application.StatusBar = "Processing: " & FolderName & " | File: " & i - startRow + 1 & " of " & endRow - startRow + 1 & " | Current File: PDF_" & i & ".docx" & " | Time elapsed: " & elapsedTime
+
+                ' Convert PDF to Word
+                Set PDFDoc = WordApp.Documents.Open(Filename)
+                PDFDoc.SaveAs2 Replace(Filename, ".pdf", ".docx"), FileFormat:=16
+                PDFDoc.Close
+                
+                elapsedTime = Format((Timer - startTime) / 86400, "hh:mm:ss")
+
+                  Application.StatusBar = "Processing: " & FolderName & " | File: " & i - startRow + 1 & " of " & endRow - startRow + 1 & " | Current File: PDF_" & i & ".txt" & " | Time elapsed: " & elapsedTime
+
+                ' Create text file with Word document
+                WordApp.Documents.Open Replace(Filename, ".pdf", ".docx")
+                WordApp.ActiveDocument.SaveAs2 Replace(Filename, ".pdf", ".txt"), FileFormat:=2
+                WordApp.ActiveDocument.Close
+            End If
+        End If
+
+SkipFile:
+    Next i
+
+    ' Quit Word application after all files have been processed
+    WordApp.Quit
+    Application.StatusBar = False
+End Sub
+
+

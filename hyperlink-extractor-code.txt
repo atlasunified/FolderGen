@@ -1,0 +1,22 @@
+' HYPERLINK EXTRACTOR
+' This VBA code takes the information in the 'Product Number' Page and offsets 
+' the linked information in the cell into the 'Hyperlinks' comlumn.
+' If your're a developer, manipulating this information is easy. If you're a
+' novice, chances are you aren't reading this, but if you are, just modify the
+' information within the rows themselves and keep a mental note of what the data
+' represents.
+
+' Atlas Unified
+
+Sub ExtractHL()
+
+Dim HL As Hyperlink
+
+For Each HL In ActiveSheet.Hyperlinks
+HL.Range.Offset(0, 5).Value = HL.Address
+
+Next
+
+End Sub
+
+
