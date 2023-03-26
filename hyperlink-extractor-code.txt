@@ -8,14 +8,14 @@
 
 ' Atlas Unified
 
-Sub ExtractHL()
+Private Sub CommandButton3_Click()
 
 Dim HL As Hyperlink
-
 For Each HL In ActiveSheet.Hyperlinks
 HL.Range.Offset(0, 5).Value = HL.Address
-
 Next
+
+MsgBox "Hyperlink Extraction Complete!"
 
 End Sub
 

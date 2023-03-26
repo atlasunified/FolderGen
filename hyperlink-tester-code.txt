@@ -8,30 +8,33 @@
 
 ' Atlas Unified
 
-Sub TestLinksInRange()
+Private Sub CommandButton2_Click()
 
-Dim xhr As Object
-Dim urlRange As Range
-Dim urlCell As Range
-Dim startCell As Range
-Dim finishCell As Range
-
-Set xhr = CreateObject("MSXML2.XMLHTTP")
-Set startCell = Range("D4")
-Set finishCell = Range("E4")
-Set urlRange = Range(startCell, finishCell)
-
-For Each urlCell In urlRange
-    xhr.Open "GET", urlCell.Value, False
-    xhr.send
+    Dim xhr As Object
+    Dim urlRange As Range
+    Dim urlCell As Range
+    Dim lastRow As Long
     
-    If xhr.Status = 200 Then
-        urlCell.Offset(0, 1).Value = "200" 'Write "200" to cell next to URL
-    Else
-        urlCell.Offset(0, 1).Value = "400" 'Write "400" to cell next to URL
-    End If
-Next urlCell
-
-MsgBox "Link Testing Complete!"
+    Set xhr = CreateObject("MSXML2.XMLHTTP")
+    
+    ' Find the last row with data in the "Hyperlinks" column (column G)
+    lastRow = Cells(Rows.Count, "G").End(xlUp).Row
+    
+    ' Set the range based on the last row of the "Hyperlinks" column
+    Set urlRange = Range("G2:G" & lastRow)
+    
+    For Each urlCell In urlRange
+        xhr.Open "GET", urlCell.Value, False
+        xhr.send
+        
+        If xhr.Status = 200 Then
+            urlCell.Offset(0, 1).Value = "200" 'Write "200" to cell next to URL
+        Else
+            urlCell.Offset(0, 1).Value = "400" 'Write "400" to cell next to URL
+        End If
+    Next urlCell
+    
+    ' Display a message box when the execution is done
+    MsgBox "Link Testing Complete!"
 
 End Sub

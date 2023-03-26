@@ -10,69 +10,58 @@ FolderGen
 
 ' Atlas Unified
 
-Private Sub CommandButton1_Click()
+Sub DownloadAndConvert()
+
     Dim FileSystem As Object
-    Dim folderPath As String
+    Dim FolderPath As String
     Dim ParentFolderPath As String
     Dim ws As Worksheet
     Dim i As Long
     Dim URL As String
     Dim FolderName As String
     Dim xmlhttp As Object
-    Dim folder As Object
+    Dim Folder As Object
     Dim WordApp As Object
     Dim PDFDoc As Object
-    Dim BatchSize As Integer
-    Dim UserResponse As Integer
-    Dim startTime As Double
-    Dim elapsedTime As String
-    Dim startRow As Long
-    Dim endRow As Long
-
-    
-    startRow = 8
-    endRow = 20
     
     Application.StatusBar = "Processing..."
     
     Set FileSystem = CreateObject("Scripting.FileSystemObject")
-    ParentFolderPath = "C:\Excel-Function"
+    ParentFolderPath = "C:\FolderGen2"
 
     If Not FileSystem.FolderExists(ParentFolderPath) Then
         FileSystem.CreateFolder ParentFolderPath
     End If
 
-    Set ws = ThisWorkbook.Worksheets("FolderGen")
-    
-    startTime = Timer
-    
-    ' Initialize Word application
-    Set WordApp = CreateObject("Word.Application")
-    WordApp.Visible = False
+    Set ws = ThisWorkbook.Worksheets("Sheet1")
 
-    For i = startRow To endRow
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, "G").End(xlUp).Row
+
+    For i = 2 To lastRow
         FolderName = ws.Cells(i, 10).Value
 
         If Not FileSystem.FolderExists(ParentFolderPath & "\" & FolderName) Then
             FileSystem.CreateFolder ParentFolderPath & "\" & FolderName
         End If
 
-        URL = ws.Cells(i, 7).Value
+        URL = ws.Cells(i, "G").Value
 
         If URL <> "" Then
-            folderPath = ParentFolderPath & "\" & FolderName
-            Filename = folderPath & "\" & "PDF_" & i & ".pdf"
-
-            ' Skip file if it already exists
-            If FileSystem.FileExists(Filename) Then
-                GoTo SkipFile
-            End If
+            FolderPath = ParentFolderPath & "\" & FolderName
 
             Set xmlhttp = CreateObject("MSXML2.XMLHTTP")
             xmlhttp.Open "GET", URL, False
             xmlhttp.send
 
             If xmlhttp.Status = 200 Then
+                Filename = FolderPath & "\" & "PDF_" & i & ".pdf"
+
+                ' Delete file if it already exists
+                If FileSystem.FileExists(Filename) Then
+                    FileSystem.DeleteFile Filename
+                End If
+
                 Set oStream = CreateObject("ADODB.Stream")
                 oStream.Open
                 oStream.Type = 1
@@ -80,32 +69,32 @@ Private Sub CommandButton1_Click()
                 oStream.SaveToFile Filename, 2
                 oStream.Close
 
-                elapsedTime = Format((Timer - startTime) / 86400, "hh:mm:ss")
-        
                 Application.StatusBar = "Processing: " & FolderName & " | File: " & i - startRow + 1 & " of " & endRow - startRow + 1 & " | Current File: PDF_" & i & ".docx" & " | Time elapsed: " & elapsedTime
 
                 ' Convert PDF to Word
+                Set WordApp = CreateObject("Word.Application")
+                WordApp.Visible = False
                 Set PDFDoc = WordApp.Documents.Open(Filename)
-                PDFDoc.SaveAs2 Replace(Filename, ".pdf", ".docx"), FileFormat:=16
-                PDFDoc.Close
                 
-                elapsedTime = Format((Timer - startTime) / 86400, "hh:mm:ss")
-
-                  Application.StatusBar = "Processing: " & FolderName & " | File: " & i - startRow + 1 & " of " & endRow - startRow + 1 & " | Current File: PDF_" & i & ".txt" & " | Time elapsed: " & elapsedTime
-
-                ' Create text file with Word document
-                WordApp.Documents.Open Replace(Filename, ".pdf", ".docx")
-                WordApp.ActiveDocument.SaveAs2 Replace(Filename, ".pdf", ".txt"), FileFormat:=2
-                WordApp.ActiveDocument.Close
+                Application.StatusBar = "Processing: " & FolderName & " | File: " & i - startRow + 1 & " of " & endRow - startRow + 1 & " | Current File: PDF_" & i & ".docx" & " | Time elapsed: " & elapsedTime
+                
+                PDFDoc.SaveAs2 Replace(Filename, ".pdf", ".docx"), FileFormat:=16
+                PDFDoc.SaveAs2 Replace(Filename, ".pdf", ".txt"), FileFormat:=2
+                PDFDoc.Close
             End If
         End If
 
-SkipFile:
     Next i
 
-    ' Quit Word application after all files have been processed
     WordApp.Quit
-    Application.StatusBar = False
+
+    ' Display a message when execution is done
+    MsgBox "Files have been downloaded and converted successfully.", vbInformation, "Execution Complete"
+
 End Sub
 
+Private Sub CommandButton1_Click()
 
+    DownloadAndConvert
+
+End Sub
