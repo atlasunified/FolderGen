@@ -1,6 +1,9 @@
 ' HYPERLINK TESTER
-' This VBA code takes the information in the 'Product Number' Page and offsets 
-' the linked information in the cell into the 'Hyperlinks' comlumn.
+' This VBA code takes the hyperlinks from column 'HYPERLINKS' and checks them
+' for a 200 or 400 code status response from the website. If it is a good link,
+' you'll see a green circle with a checkmark in the column next to the 
+' hyperlink column. If it returns a 400, then you'll see a red circle with an
+' 'X' inside. This means it returned a bad response and the file may not be there.
 ' If your're a developer, manipulating this information is easy. If you're a
 ' novice, chances are you aren't reading this, but if you are, just modify the
 ' information within the rows themselves and keep a mental note of what the data
